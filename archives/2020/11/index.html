@@ -6,11 +6,11 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://example.com">
-  <title>Hexo</title>
+  <title>Archives: 2020/11 | Hexo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta property="og:type" content="website">
 <meta property="og:title" content="Hexo">
-<meta property="og:url" content="http://example.com/index.html">
+<meta property="og:url" content="http://example.com/archives/2020/11/index.html">
 <meta property="og:site_name" content="Hexo">
 <meta property="og:locale" content="en_US">
 <meta property="article:author" content="John Doe">
@@ -152,357 +152,41 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-HashMap源码分析" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
+  
     
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="HashMap源码分析"><a href="#HashMap源码分析" class="headerlink" title="==HashMap源码分析=="></a>==HashMap<strong>源码分析</strong>==</h1><h2 id="HashMap数据结构"><a href="#HashMap数据结构" class="headerlink" title="HashMap数据结构"></a>HashMap数据结构</h2><p>HashMap实际上是一个“链表散列”的数据结构，即数组和链表的结合体 </p>
-<p><img src="C:\Users\549\AppData\Roaming\Typora\typora-user-images\image-20201031142727696.png" alt="image-20201031142727696"></p>
-<p>首先介绍一下Map。<img src="https://img-blog.csdnimg.cn/20190326222210343.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0h1YW5neHVfTUlLVQ==,size_16,color_FFFFFF,t_70" alt="img">在数组中我们是通过数组下标来对其内容索引的，而在Map中我们通过<u><strong>对象</strong></u>来对==对象==进行索引，用来索引的<u><strong>对象</strong></u>叫做key，其对应的==对象==叫做value。</p>
-<p>HashMap和TreeMap的区别。HashMap通过hashcode对其内容进行快速查找，而TreeMap中所有的元素都保持着某种固定的顺序，如果你需要得到一个有序的结果你就应该使用TreeMap（HashMap中元素的排列顺序是不固定的）。</p>
-<p>在HashMap中通过get()来获取value，通过put()来插入value，ContainsKey()则用来检验对象是否已经存在。可以看出，和ArrayList的操作相比，HashMap除了通过key索引其内容之外，别的方面差异并不大。</p>
-<p>HashMap是基于HashCode的，在所有对象的超类Object中有一个HashCode()方法，但是它和equals方法一样，并不能适用于所有的情况。</p>
-<h5 id="上图中-A0-A5-为数组-其源码对应为"><a href="#上图中-A0-A5-为数组-其源码对应为" class="headerlink" title="上图中**==A0~A5==**为数组,其源码对应为"></a>上图中**==A0~A5==**为数组,其源码对应为</h5><p>` <strong>==transient Node&lt;K,V&gt;[] table;==</strong></p>
-<pre><code>/**
- * Holds cached entrySet(). Note that AbstractMap fields are used
- * for keySet() and values().
- */`</code></pre>
-<blockquote>
-<p>HashMap里有一个名为tabled的数组.通过hash值的运算可以算出一个数组的下标，决定元素存储在数组的什么位置。这样下次查找的时候可以直接通过同样的方式，直接找到元素，而不用遍历数组。</p>
-</blockquote>
-<blockquote>
-<p>计算方式：（数组长度 - 1）&amp;hash</p>
-<p>数组长度是二的二次方，2^2^ 二进制是100，</p>
-<p>​                                             2^3^ 二进制是1000，</p>
-<p>​                                              2^4^ 是1000.</p>
-<p>按照这个规律，长度 - 1，刚好是011，0111，01111. 将它作为掩码，来计算数组下标。</p>
-</blockquote>
-<blockquote>
-<p>那么就用掩码和hash做与运算：</p>
-<p>011&amp;101010100101001001101=01 下标=1， 数组长度=4</p>
-<p>0111&amp;101010100101001001101=101 下标=5，数组长度=8</p>
-<p>01111&amp;101010100101001001101=1101 下标=13，数组长度=16</p>
-<p>可以发现，通过  掩码&amp;hash， 得出的数组下标不会越界。而数组的总长度总是2^n^ </p>
-</blockquote>
-<blockquote>
-<p>上loat述计算中，hash值的高位，没有参与数组下标计算，而是被掩码掩盖掉了。假如有一类hash，特点是低位都为0，高位才发生变化。</p>
-<p>例如 Float类：</p>
-<p>System.out.println(Integer.toBinaryString(new Float(1).hashCode()));</p>
-<p>System.out.println(Integer.toBinaryString(new Float(2).hashCode()));</p>
-<p>System.out.println(Integer.toBinaryString(new Float(3).hashCode()));</p>
-<p>System.out.println(Integer.toBinaryString(new Float(4).hashCode()));</p>
-<p>System.out.println(Integer.toBinaryString(new Float(5).hashCode()));</p>
-<p>System.out.println(Integer.toBinaryString(new Float(6).hashCode()));</p>
-<p>输出结果：</p>
-<p>111111100000000000000000000000</p>
-<p>1000000000000000000000000000000</p>
-<p>1000000010000000000000000000000</p>
-<p>1000000100000000000000000000000</p>
-<p>1000000101000000000000000000000</p>
-<p>1000000110000000000000000000000</p>
-<p>可以看到地位全部是0，那么直接拿来用的话，就会把发现算出来的数组下标全部是0，这样就全部冲突了。因此，为了避免这种特殊的情况，就需要高位也参与运算，这就是需要重新计算hash值的原因。</p>
-</blockquote>
-<h5 id="JDK1-8中红黑树的hash计算源码"><a href="#JDK1-8中红黑树的hash计算源码" class="headerlink" title="JDK1.8中红黑树的hash计算源码"></a>JDK1.8中红黑树的hash计算源码</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;**</span><br><span class="line">* Computes key.hashCode() and spreads (XORs) higher bits of hash to lower.</span><br><span class="line">* * 换算下 key.hashCode() 的值，通过异或运算（XORs) 使高位扩散到低位。 </span><br><span class="line">* Because the table uses power-of-two masking, sets of hashes that vary</span><br><span class="line">only in bits above the current mask will always collide.</span><br><span class="line">* * 由于存储元素的table数组，采用的是 2 的次方的长度，并且以此作为下标取值掩码。</span><br><span class="line">那么对于，只有高于当前掩码长度的位会变化的 hash 来说，计算出来数组下标就会全部冲突</span><br><span class="line">* (Among known examples are sets of Float keys </span><br><span class="line">* holding consecutive whole numbers in small tables.)</span><br><span class="line">* * 其中一种已知的一种情况是 Float 作为 key，并且按照自然数顺序递增的</span><br><span class="line">存入一个小尺寸的table数组中</span><br><span class="line">* * So we apply a transform that spreads the impact of higher bits downward. </span><br><span class="line">* * 因此我们利用一种转换，来把高位的变化性扩散的低位去。</span><br><span class="line">* * There is a tradeoff between speed, utility, and quality of bit-spreading.</span><br><span class="line">* * 这是基于速度，效用和位扩散品质的一种权衡方案。</span><br><span class="line">* * Because many common sets of hashes are already reasonably distributed </span><br><span class="line">(so don&#39;t benefit from spreading), and because we use trees to handle large</span><br><span class="line">sets ofcollisions in bins, we just XOR some shifted bits in the cheapest</span><br><span class="line">possible way to reduce systematic lossage, as well as to incorporate impact</span><br><span class="line">of the highest bits that would otherwise never be used in index calculations</span><br><span class="line">because of table bounds.</span><br><span class="line">* * 因为许多常见的 hash 值都是适度分散的（因此位扩散的收益不大），又因为 </span><br><span class="line">* 我们使用树，来管控大数量的冲突元素。使用XOR异或运算来移位，可以尽可能低成本地 </span><br><span class="line">* 减少系统性损耗，也将原本不参与数组下标计算的高位的也给包含进来了。</span><br><span class="line">* *下面是将低16位和高16位做个异或运算，高16位保持不变</span><br><span class="line">* *static final int hash(Object key) </span><br><span class="line">* &#123; int h;</span><br><span class="line">* return (key &#x3D;&#x3D; null) ? 0 : (h &#x3D; key.hashCode()) ^ (h &gt;&gt;&gt; 16);</span><br><span class="line">&#125;</span><br><span class="line">*&#x2F;</span><br></pre></td></tr></table></figure>
-
-<h5 id="HashCode扰动计算"><a href="#HashCode扰动计算" class="headerlink" title="HashCode扰动计算"></a>HashCode扰动计算</h5><p><img src="HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.assets/image-20201031171000257.png" alt="image-20201031171000257"></p>
-<blockquote>
-<p>这段代码是为了对key的hashCode进行扰动计算，防止不同hashCode的高位不同但低位相同导致的hash冲突。简单点说，就是为了把高位的特征和低位的特征组合起来，降低哈希冲突的概率，也就是说，尽量做到任何一位的变化都能对最终的结果产生影响。</p>
-</blockquote>
-<h2 id="重要参数"><a href="#重要参数" class="headerlink" title="重要参数"></a>重要参数</h2><p>HashMap的实例有两个参数影响其性能：初始容量和加载因子。容量是<a target="_blank" rel="noopener" href="https://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=4761024&ss_c=ssc.citiao.link">哈希表</a>中桶的数量，初始容量只是哈希表在创建时的容量。加载因子是哈希表在其容量自动增加之前可以达到多满的一种尺度。当哈希表中的条目数超出了加载因子与当前容量的乘积时，则要对该哈希表进行rehash操作（即重建内部数据结构），从而哈希表将具有大约两倍的桶数。在<a target="_blank" rel="noopener" href="https://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=1544053&ss_c=ssc.citiao.link">Java编程语言</a>中，加载因子默认值为0.75，默认哈希表元为101[<a target="_blank" rel="noopener" href="https://baike.sogou.com/v8338448.htm?fromTitle=Hashmap#quote1">1]</a>。</p>
-<h3 id="初始容量大小默认值为16"><a href="#初始容量大小默认值为16" class="headerlink" title="初始容量大小默认值为16"></a>初始容量大小默认值为16</h3><p><code> /*      * The default initial capacity - MUST be a power of two.           */         ==static final int DEFAULT_INITIAL_CAPACITY = 1 &lt;&lt; 4; // aka 16==</code></p>
-<blockquote>
-<p>为了减小冲突的概率，当HashMap的数组长度到了一个临界值就会触发扩容，把所有元素rehash再放到扩容后的容器中，这是一个非常耗时的操作。</p>
-</blockquote>
-<blockquote>
-<p>而这个临界值由<strong>加载因子</strong>和当前容器的容量大小来确定：DEFAULT_INITIAL_CAPACITY*DEFAULT_LOCAL_FACTOR,即默认情况下是16 * 0.75=12时，就会触发扩容操作。所以使用hash容器时尽量预估自己的数据来设置初始值。</p>
-</blockquote>
-<h3 id="加载因子默认0-75"><a href="#加载因子默认0-75" class="headerlink" title="加载因子默认0.75"></a>加载因子默认0.75</h3><p>`<strong>==static final float DEFAULT_LOAD_FACTOR = 0.75f;==</strong></p>
-<pre><code>/**
- * The bin count threshold for using a tree rather than list for a
- * bin.  Bins are converted to trees when adding an element to a
- * bin with at least this many nodes. The value must be greater
- * than 2 and should be at least 8 to mesh with assumptions in
- * tree removal about conversion back to plain bins upon
- * shrinkage.
- */`</code></pre>
-<blockquote>
-<p>为容器使用树而不是列表时的容器计数阈值。<br>当向至少有这么多节点的bin中添加一个元素时，bin被转换为树。<br>该值必须大于2，并且至少应该是8，以符合在树移除时关于在收缩时转换回普通箱的假设。</p>
-</blockquote>
-<h5 id="源码中对0-75的解释"><a href="#源码中对0-75的解释" class="headerlink" title="源码中对0.75的解释"></a>源码中对0.75的解释</h5><p><img src="HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.assets/image-20201031183831717.png" alt="image-20201031183831717"></p>
-<blockquote>
-<p>wiki链接中的关键字：Poisssion_distribution==<strong>【泊松分布】</strong>==</p>
-<p>再理想条件下，使用随机哈希码，节点出现的频率在hash桶中遵循泊松分布，同时给给出了桶中元素个数和概率的对照表。</p>
-<p>从上面的表中可以看到当桶中元素达到8个的时候，概率已经变得非常小，也就是说用0.75作为加载因子，每个碰撞位置的链表长度超过8个是几乎不可能的。</p>
-</blockquote>
-<h3 id="HashMap数组容量初始值不宜设置太高的原因"><a href="#HashMap数组容量初始值不宜设置太高的原因" class="headerlink" title="HashMap数组容量初始值不宜设置太高的原因"></a>HashMap数组容量初始值不宜设置太高的原因</h3><p>`<p>This implementation provides constant-time performance for the basic</p>
-<ul>
-<li>operations (<tt>get</tt> and <tt>put</tt>), assuming the hash function</li>
-<li>disperses the elements properly among the buckets.  Iteration over</li>
-<li>collection views requires time proportional to the “capacity” of the</li>
-<li><tt>HashMap</tt> instance (the number of buckets) plus its size (the number</li>
-<li>of key-value mappings).  Thus, it’s very important not to set the initial</li>
-<li>capacity too high (or the load factor too low) if iteration performance is</li>
-<li>important.`</li>
-</ul>
-<blockquote>
-<p>HashMap 的实例有两个参数影响其性能：初始容量和加载因子。基于<a target="_blank" rel="noopener" href="https://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=4761024&ss_c=ssc.citiao.link">哈希表</a>的Map接口的实现。此实现提供所有可选的映射操作，并允许使用<a target="_blank" rel="noopener" href="https://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=46383579&ss_c=ssc.citiao.link">null值</a>和null键。（除了非同步和允许使用null之外，HashMap类与<a target="_blank" rel="noopener" href="https://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=403515&ss_c=ssc.citiao.link">Hashtable</a>大致相同。）此类不保证映射的顺序，特别是它不保证该顺序恒久不变。此实现假定<a target="_blank" rel="noopener" href="https://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=177729&ss_c=ssc.citiao.link">哈希函数</a>将元素适当地分布在各桶之间，可为基本操作（get和put）提供稳定的性能。迭代collection视图所需的时间与HashMap实例的“容量”（桶的数量）及其大小（键-值映射关系数）成比例。所以，如果迭代性能很重要，则不要将初始容量设置得太高（或将加载因子设置得太低）。</p>
-</blockquote>
-<h2 id="迭代器"><a href="#迭代器" class="headerlink" title="迭代器"></a>迭代器</h2><p>当我们在使用迭代器的时候我们有两种方式，一个是通过keyset一个是entryset，通过第一中方式我们只能够通过getKey（）来获取key值，但是如果用entryset的话我们既可以获得key值又可以获得value值，分别通过getKey（）和getValue（)来获得。</p>
-<ol>
-<li><code>第一种:</code></li>
-<li>　　<code>Map map = new HashMap();</code></li>
-<li>　　<code>Iterator iter = map.entrySet().iterator();</code></li>
-<li>　　<code>while (iter.hasNext()) &#123;</code></li>
-<li>　　<code>Map.Entry entry = (Map.Entry) iter.next();</code></li>
-<li>　　<code>Object key = entry.getKey();</code></li>
-<li>　　<code>Object val = entry.getValue();</code></li>
-<li>　　<code>&#125;</code></li>
-<li>　　<code>效率高,以后一定要使用此种方式！</code></li>
-<li><code>第二种:</code></li>
-<li>　　<code>Map map = new HashMap();</code></li>
-<li>　　<code>Iterator iter = map.keySet().iterator();</code></li>
-<li>　　<code>while (iter.hasNext()) &#123;</code></li>
-<li>　　<code>Object key = iter.next();</code></li>
-<li>　　<code>Object val = map.get(key);</code></li>
-<li>　　<code>&#125;</code></li>
-<li>　　<code>效率低,以后尽量少使用！</code></li>
-</ol>
-<blockquote>
-<p>由所有此类的“collection视图方法”所返回的<a target="_blank" rel="noopener" href="https://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=8083528&ss_c=ssc.citiao.link">迭代器</a>都是快速失败的：在迭代器创建之后，如果从结构上对映射进行修改，除非通过迭代器本身的remove方法，而不冒在将来不确定的时间发生任意不确定行为的风险。</p>
-<p>注意，迭代器的快速失败行为不能得到保证，一般来说，存在非同步的并发修改时，编写依赖于此异常的程序的做法是错误的，正确做法是：迭代器的快速失败行为应该仅用于检测程序错误。</p>
-<p>遍历Hash中的元素</p>
-<p>在Hash中可以直接使用一下方法遍历(所有键)KeySet</p>
-<p>然后通过键可以找出需要的值</p>
-<p><code>HashMap mp=new HashMap();</code></p>
-<p><code>for(String i:mp.keySet())</code></p>
-<p><code>&#123;</code></p>
-<p><code>//String是mp中的键的对应类型;i是对应的KeySet中的每一个键值System.out.println(mp.get(i));</code></p>
-<p><code>&#125;</code></p>
-</blockquote>
-<h2 id="常见面试题"><a href="#常见面试题" class="headerlink" title="常见面试题"></a>常见面试题</h2><h3 id="为什么要重写hashcode和equals方法"><a href="#为什么要重写hashcode和equals方法" class="headerlink" title="==为什么要重写hashcode和equals方法=="></a>==<u>为什么要重写hashcode和equals方法</u>==</h3><h6 id="首先复习一下Hash算法"><a href="#首先复习一下Hash算法" class="headerlink" title="首先复习一下Hash算法"></a>首先复习一下Hash算法</h6><p>数据结构知识点：在一个长度为n（假设是1000）的线性表（假设是ArrayyList）里，存放着无序数字；如果我们要找一个指定的数字，就不得不通过从头到尾依次遍历来查找。</p>
-<p>Hash表：（特指数据结构中的概念，和Java无关）。它的平均查找次数接近于1，代价相当小，关键是在Hash表里，存放在其中的数据和它的存储位置是用Hash函数关联的。</p>
-<p>我们假设一个Hash函数是x*x%5（实际不会用这么简单的Hash函数，为方便说明而举例）。Hash表是一个长度为11的线性表，如果把6用Hash函数计算一下，结果是1，所以我们就把6放入到索引号是1这个位置。同样，放数字7，经过Hsh计算，结果为4 ，它就会被放入到索引为4的这个位置。</p>
-<p><img src="HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.assets/mmexport1604198358195.jpg" alt="mmexport1604198358195"></p>
-<p>这样做的好处很明显，例如我们要找6这个元素，我们可以先通过Hash函数计算6的索引位置，然后直接从1号索引里找到它了。不过我们会遇到hash冲突这个问题。例如经过7和8会有相同的Hash值，对此Java的HashMap对象采用的是“<strong>链地址法</strong>”的解决方案。效果如下：</p>
-<p><img src="HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.assets/mmexport1604199594355.jpg" alt="mmexport1604199594355"></p>
-<p>具体做法是，为所有的Hash值是i的对象建立一个同义词链表。假设我们在放入8的时候，发现4号位置已经被占用，那么就会新建一个链表节点放入8.同样，如果我们查找8，那么发现4号索引里不是8，那么会沿着链表依次查找。</p>
-<p>虽然我们还是无法彻底避免Hash值冲突的问题，但是Hash函数设计合理，仍能保证同义词链表的长度被控制在一个合理的范围里。</p>
-<h6 id="重写equals和hashCode方法"><a href="#重写equals和hashCode方法" class="headerlink" title="重写equals和hashCode方法"></a>重写equals和hashCode方法</h6><p>当我们用HashMap存入自定义的类时，如果不重写这个自定义类的equals和hashCode方法，得到的结果会和我们预期的不一样。我们来看WithoutHashCode.java这个例子。</p>
-<p>在其中的第2行到第18行，我们定义了一个Key类；在其中的第3行定义了唯一的一个属性id。当前我们先注释掉第9行的equals方法的第16行的hashCode方法。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> test;</span><br><span class="line"><span class="keyword">import</span> java.util.HashMap;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Key</span></span>&#123;</span><br><span class="line">	<span class="keyword">private</span> Integer id;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> Integer <span class="title">getId</span><span class="params">()</span></span></span><br><span class="line"><span class="function">	</span>&#123;<span class="keyword">return</span> id;&#125;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="title">Key</span><span class="params">(Integer id)</span></span></span><br><span class="line"><span class="function">	</span>&#123;<span class="keyword">this</span>.id=id;&#125;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">equals</span><span class="params">(Object o)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span>(o==<span class="keyword">null</span>||!(o <span class="keyword">instanceof</span> Key))</span><br><span class="line">		&#123;<span class="keyword">return</span> <span class="keyword">false</span>;&#125;</span><br><span class="line">		<span class="keyword">else</span> </span><br><span class="line">		&#123;<span class="keyword">return</span> <span class="keyword">this</span>.getId().equals(((Key)o).getId());&#125;</span><br><span class="line">		&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">hashCode</span><span class="params">()</span></span>&#123;</span><br><span class="line"><span class="keyword">return</span> id.hashCode();&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WithputHashCode</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		Key k1=<span class="keyword">new</span> Key(<span class="number">1</span>);</span><br><span class="line">		Key k2=<span class="keyword">new</span> Key(<span class="number">1</span>);</span><br><span class="line">		HashMap&lt;Key,String&gt;hm=<span class="keyword">new</span> HashMap&lt;Key,String&gt;();</span><br><span class="line">		hm.put(k1,<span class="string">&quot;Key with id is 1&quot;</span>);</span><br><span class="line">		System.out.println(hm.get(k2));</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>在main函数里的第20行和第21行，我们定义了两个Key对象，它们的id都是1，就好比它们是把相同的都能打开同一扇门的钥匙。</p>
-<p>在第22行里，我们通过泛型创建了一个HashMap对象。它的键部分可以存放Key类型的对象，值部分可以存储String类型的对象。</p>
-<p>在第23行里，通过put方法把k1和一串字符串放入到hm里；而在第24行，我们想用k2去从HashMap里得到值；这就好比我们想用k1这把钥匙来锁门，用k2来开门。这是符合逻辑的，但从结果来看，24行的返回值结果不是我们想象的那个字符串，而是null。</p>
-<p>原因有两个：<strong>一是没有重写hashCode方法，二是没有重写equals方法。</strong></p>
-<p>当我们在HashMap里放k1时，首先会调用Key这个类的hashCode方法来计算它的hash值，随后把k1放入hash值所指引的内存位置。</p>
-<p>关键是我们没有在Key里定义hashCode方法。这里调用的仍是Object类的hashCode方法（所有类都是Object类的子类），而Object类的hashCode方法返回的hash值其实是k1对象的内存地址（假设是1000）。</p>
-<p><img src="HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.assets/mmexport1604204004534.jpg" alt="mmexport1604204004534"></p>
-<p>如果随后调用hm.get(k1)，那么我们会再次调用hashCode方法（还是返回k1的地址1000），随后根据得到的hash值，很快的找到k1.</p>
-<p>但我们这里的代码时hm.get(k2),当我们调用Object类的hashCode方法（因为Key里没有定义）计算k2的hash值时，其实得到的是k2的内存地址（假设是2000）。由于k1和k2是两个不同的对象，所以它们的内存地址一定不会相同，也就是说它们的hash值一定不同，这就是我们无法用k2的hash值去拿k1的原因。</p>
-<p>当我们把第16行和第15行的hashCode方法的注释去掉以后，会发现它返回id属性的hashCode值，这里k1和k2的id都是1，所以它们的hash值是相等的。</p>
-<p>我们再来更正一下存k1和取k2的动作。存k1时，是根据它id的hash值，假设这里是100，把k1对象放入到对应的位置。而取k2时，是先计算它的hash值（由于k2的id也是1，这个值也是100），随后到这个位置去找。</p>
-<p>但结果会出乎我们意料：明明100号位置已经有k1，但第24行的输出结果依然是null。其原因是没有重写Key对象的equals方法。</p>
-<p>HashMap是用<strong>链地址法</strong>来处理冲突，也就是说，在100号位置上，有可能存在着多个用链表形式存储的对象。它们通过hashCode方法返回的hash值都是100.</p>
-<p><img src="HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.assets/mmexport1604205560994-1604212341100.jpg" alt="mmexport1604205560994"></p>
-<p>当我们通过k2的hashCode到100号位置查找时，确实会得到k1.但k1有可能仅仅是和k2具有相同的hash值，但未必相等（两把钥匙未必能开一把锁)，这个时候，就需要用key对象的equals方法来判断两者是否相等了。</p>
-<p>由于我们在Key对象里没有定义equals方法，系统就不得不调用Object类的equals方法。由于Object的固有方法是根据两个对象的内存地址来判断，所以k1和k2一定不会相等，这就是为什么依然在24行通过hm.get(k2)依然得到null的原因。</p>
-<p>为了解决这个问题，我们需要打开第9行到第14行equals方法的注释。在这个方法里，只要两个对象都是Key类型，而且它们的id相等，它们就相等。</p>
-<blockquote>
-<p><strong>最后再强调一下</strong>：如果要在HashMap的“键”部分存放自定义的对象，一定要在这个对象里用自己的equals和hashCode方法来覆盖Object里的同名方法。</p>
-</blockquote>
-<p>链表部分 参考 知乎 <a target="_blank" rel="noopener" href="https://www.zhihu.com/people/chou-da-ma-de-tu-zi">长者见闻</a>  文章<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/62923854">https://www.zhihu.com/question/62923854</a></p>
-<p>迭代部分 参考 CSDN <a target="_blank" rel="noopener" href="https://me.csdn.net/Huangxu_MIKU">Skeram_Huang</a> 文章<a target="_blank" rel="noopener" href="https://blog.csdn.net/Huangxu_MIKU/article/details/88832067">https://blog.csdn.net/Huangxu_MIKU/article/details/88832067</a> </p>
-<p>面试题  参考  微信公众号 CodeSheep</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
+    
       
       
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/11/03/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
+      <section class="archives-wrap">
+        <div class="archive-year-wrap">
+          <a href="/archives/2020" class="archive-year">2020</a>
         </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-我的第一篇博客文章" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
+        <div class="archives">
     
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/10/30/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2%E6%96%87%E7%AB%A0/">我的第一篇博客文章</a>
-    </h1>
-  
-
-        
-        <a href="/2020/10/30/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2%E6%96%87%E7%AB%A0/" class="archive-article-date">
-  	<time datetime="2020-10-30T07:12:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-10-30</time>
+    <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      	<div class="article-meta">
+	      	<a href="/2020/11/03/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="archive-article-date">
+  	<time datetime="2020-11-03T07:46:55.554Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-11-03</time>
 </a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="第一章"><a href="#第一章" class="headerlink" title="第一章"></a>第一章</h2><p>代码块</p>
-<blockquote>
-</blockquote>
-<hr>
-<h2 id="第二章"><a href="#第二章" class="headerlink" title="第二章"></a>第二章</h2><p>内容</p>
-<hr>
-<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p><a target="_blank" rel="noopener" href="http://www.codesheep.cn/">www.codesheep.cn</a></p>
-<p>–insert–</p>
+        </div>
+    	 
+        <div class="article-info info-on-right">
+          
+          
 
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/10/30/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2%E6%96%87%E7%AB%A0/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
+        </div>
+        <div class="clearfix"></div>
+    </header>
   </div>
 </article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
   
-    <article id="post-hello-world" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
+  
+    </div></section>
+  
+
     
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/10/30/hello-world/">Hello World</a>
-    </h1>
-  
-
-        
-        <a href="/2020/10/30/hello-world/" class="archive-article-date">
-  	<time datetime="2020-10-30T07:00:33.263Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-10-30</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/10/30/hello-world/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-  
 
 
           </div>
@@ -524,9 +208,9 @@
     <script>
 	var yiliaConfig = {
 		mathjax: false,
-		isHome: true,
+		isHome: false,
 		isPost: false,
-		isArchive: false,
+		isArchive: true,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
