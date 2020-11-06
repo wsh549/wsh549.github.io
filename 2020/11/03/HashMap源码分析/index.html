@@ -11,7 +11,8 @@
     <!--Description-->
     
         <meta name="description" content="==HashMap源码分析==HashMap数据结构HashMap实际上是一个“链表散列”的数据结构，即数组和链表的结合体 
-首先介绍一下Map。在数组中我们是通过数组下标来对其内容索引的，而在Map中我们通过对象来对==对象==进行索引，用来索引的对象叫做key，其对应的==对象==叫做value">
+![](# images
+介绍{以下是 Gitee 平台说明，您可以替换此简介Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发">
     
 
     <!--Author-->
@@ -173,6 +174,33 @@
 
         <!-- Post Content -->
         <h1 id="HashMap源码分析"><a href="#HashMap源码分析" class="headerlink" title="==HashMap源码分析=="></a>==HashMap<strong>源码分析</strong>==</h1><h2 id="HashMap数据结构"><a href="#HashMap数据结构" class="headerlink" title="HashMap数据结构"></a>HashMap数据结构</h2><p>HashMap实际上是一个“链表散列”的数据结构，即数组和链表的结合体 </p>
+<p>![](# images</p>
+<h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p>{<strong>以下是 Gitee 平台说明，您可以替换此简介</strong><br>Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台<br>无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 <a target="_blank" rel="noopener" href="https://gitee.com/enterprises">https://gitee.com/enterprises</a>}</p>
+<h4 id="软件架构"><a href="#软件架构" class="headerlink" title="软件架构"></a>软件架构</h4><p>软件架构说明</p>
+<h4 id="安装教程"><a href="#安装教程" class="headerlink" title="安装教程"></a>安装教程</h4><ol>
+<li> xxxx</li>
+<li> xxxx</li>
+<li> xxxx</li>
+</ol>
+<h4 id="使用说明"><a href="#使用说明" class="headerlink" title="使用说明"></a>使用说明</h4><ol>
+<li> xxxx</li>
+<li> xxxx</li>
+<li> xxxx</li>
+</ol>
+<h4 id="参与贡献"><a href="#参与贡献" class="headerlink" title="参与贡献"></a>参与贡献</h4><ol>
+<li> Fork 本仓库</li>
+<li> 新建 Feat_xxx 分支</li>
+<li> 提交代码</li>
+<li> 新建 Pull Request</li>
+</ol>
+<h4 id="特技"><a href="#特技" class="headerlink" title="特技"></a>特技</h4><ol>
+<li> 使用 Readme_XXX.md 来支持不同的语言，例如 Readme_en.md, Readme_zh.md</li>
+<li> Gitee 官方博客 <a target="_blank" rel="noopener" href="https://blog.gitee.com/">blog.gitee.com</a></li>
+<li> 你可以 <a target="_blank" rel="noopener" href="https://gitee.com/explore">https://gitee.com/explore</a> 这个地址来了解 Gitee 上的优秀开源项目</li>
+<li> <a target="_blank" rel="noopener" href="https://gitee.com/gvp">GVP</a> 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目</li>
+<li> Gitee 官方提供的使用手册 <a target="_blank" rel="noopener" href="https://gitee.com/help">https://gitee.com/help</a></li>
+<li> Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 <a target="_blank" rel="noopener" href="https://gitee.com/gitee-stars/">https://gitee.com/gitee-stars/</a>)</li>
+</ol>
 <p>首先介绍一下Map。<img src="https://img-blog.csdnimg.cn/20190326222210343.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0h1YW5neHVfTUlLVQ==,size_16,color_FFFFFF,t_70" alt="img">在数组中我们是通过数组下标来对其内容索引的，而在Map中我们通过<u><strong>对象</strong></u>来对==对象==进行索引，用来索引的<u><strong>对象</strong></u>叫做key，其对应的==对象==叫做value。</p>
 <p>HashMap和TreeMap的区别。HashMap通过hashcode对其内容进行快速查找，而TreeMap中所有的元素都保持着某种固定的顺序，如果你需要得到一个有序的结果你就应该使用TreeMap（HashMap中元素的排列顺序是不固定的）。</p>
 <p>在HashMap中通过get()来获取value，通过put()来插入value，ContainsKey()则用来检验对象是否已经存在。可以看出，和ArrayList的操作相比，HashMap除了通过key索引其内容之外，别的方面差异并不大。</p>
@@ -366,6 +394,10 @@
         <ul>
             
             <li>
+                <a class="footer-post" href="/2020/11/06/%E9%9B%86%E5%90%88/">Untitled</a>
+            </li>
+            
+            <li>
                 <a class="footer-post" href="/2020/11/04/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901/">Untitled</a>
             </li>
             
@@ -375,10 +407,6 @@
             
             <li>
                 <a class="footer-post" href="/2020/10/30/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2%E6%96%87%E7%AB%A0/">我的第一篇博客文章</a>
-            </li>
-            
-            <li>
-                <a class="footer-post" href="/2020/10/30/hello-world/">Hello World</a>
             </li>
             
         </ul>
