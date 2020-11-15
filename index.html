@@ -153,6 +153,202 @@
 
     <div class="post-header index">
         <h1 class="title">
+            <a href="/2020/11/15/Java%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%92%8C%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E6%95%B4%E5%90%88/">
+                Untitled
+            </a>
+        </h1>
+        <div class="post-info">
+            
+                <span class="date">2020-11-15</span>
+            
+            
+            
+        </div>
+    </div>
+
+    
+        <div class="content">
+            <h1 id="Java应用程序和数据库的整合"><a href="#Java应用程序和数据库的整合" class="headerlink" title="Java应用程序和数据库的整合"></a>Java应用程序和数据库的整合</h1><p>面向对象语言能够用丰富的方式对真实的世界进行建模。。关系数据库将数据持久化在表格中，而表格通常是一种更平坦的数据结构，对同样的表达能力具有局限性。</p>
+<p>本章讨论如何连接和使用数据库，以及如何将Java数据类型持久化到数据库中。本章所有示例都使用MySQL数据库，包括通过MySQL控制台访问(用mysql&gt;提示符表示)，以及通过Java的数据库接口访问。</p>
+<h2 id="SQL简介"><a href="#SQL简介" class="headerlink" title="SQL简介"></a>SQL简介</h2><p>SQL是一种抽象的声明式语言，用于在关系数据库中执行查询和数据操作。SQL是一种标准，和具体的数据库实现无关。如今基本上所有正在使用的成熟的关系数据库产品都支持SQL。</p>
+<p><strong><u><em>如何通过SQL从关系数据库检索数据？</em></u></strong></p>
+<p>关系数据库中的数据保存在很多表中，而表是由行和列组成的。每一个表通常都描述了一个逻辑的实体（entity）,也可以称为关系(relation), 例如一个人，一个地址或一个库存清单项。数据库中的每一行称为一条记录(record)， 每一条记录都可以被唯一地标识。唯一标识符称为主键(primary key). </p>
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115145904.png" alt="image-20201115145855605"></p>
+<p>从表中可以看出，每一条记录都可以通过employee_number列标识。这个表只保存了和员工相关的信息。</p>
+<p>SQL是一种用于解释和操作关系数据库数据的灵活语言，提供了一种对问题域有意义的表达式形式。如果要查询某张表，应该使用SQL SELECT语句：</p>
+<p><code>SELECT name,office_location_id FROM emplyees;</code></p>
+<p>这条查询语句返回的是employees表中的所有行，但是只包含name和 office_location_id列：</p>
+<p><code>mysql&gt; SELECT name,office_location_id FROM emplyees;</code></p>
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115150855.png" alt="image-20201115150828278"></p>
+<blockquote>
+<p>SQL语句和大小写敏感性</p>
+<p>通常来说，SQL语句是大小写敏感的。大小写敏感的不仅包括语句的关键字(例如SELECT, FROM 和WHERE等)，还包括查询语句中的对象， 例如列表和表名等。</p>
+<p>一个常用的约定是SQL关键字用大写，对象名称用小写。这种约定可以帮助代码的读者根据大小写变化将查询语句分解为不同的逻辑块。</p>
+</blockquote>
+<p>有时候需要检索某一指定的行或某一些特定的行。为此，需要在SELECT语句中加上WHERE 子句。这个子句会对一个布尔表达式求值而且会针对每一行进行求值。如果表达式对某一行求值为真，那么这一行就会被包含在结果集中：</p>
+<p><code>mysql&gt; SELECT name,office_location_id FROM emplyees WHERE employee_number&gt;2;</code><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115153627.png" alt="image-20201115153626879"></p>
+<p>注意这个例子中的WHERE子句对并不包含在结果集中的一个列进行求值，也就是说在查询语句中可以访问任意列，即使被访问的列不在最终的结果集中。</p>
+<p>如果要在查询中返回所有的列，那么可以使用通配符*表示所有的列：</p>
+<p><code>mysql&gt; SELECT * FROM emplyees WHERE employee_number = 1;</code></p>
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115154120.png" alt="image-20201115154120113"></p>
+<p>如果在表中添加，删除，或者修改了列，此查询都可以正常工作，只不过返回的结果不同。假设这个表隶属于一个公司的大型数据库，那么可以想象这个数据库中还有其他表示不同实体的表，例如表示公司所有办公地点的信息以及每个人工作地点的信息，甚至还有各个管理层结构的信息。数据库的迷人之处和威力就在于这些关系之间的交互。</p>
+<p>下面的表定义了这个公司数据库中的另外一个，名为office_locations 的表。</p>
+<p><code> CREATE TABLE office_location (office_location_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,location_name VARCHAR(20),address VARCHAR(20),lease_expiry_date DATE); Query OK, 0 rows affected (2.16 sec)</code></p>
+<p><code>mysql&gt; INSERT INTO office_location VALUES(1,&#39;New York&#39;,&#39;Union Plaza&#39;,NULL),(2,&#39;Paris&#39;,&#39;Revolution Place&#39;,NULL),(3,&#39;London&#39;,&#39;Piccadilly Square&#39;,&#39;2014-05-30&#39;); Query OK, 3 rows affected (0.12 sec)</code></p>
+<p><code>mysql&gt; SELECT * FROM office_location;</code></p>
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115160107.png" alt="image-20201115160106939"></p>
+<p>尽管这个表中的信息从逻辑上和employees表是分离的，但是这两个表之间肯定是有关系的。对这两个表检索可以得到以下结果：</p>
+<p><code>mysql&gt; select emplyees.name,office_location.location_name     -&gt; from emplyees,office_location;</code></p>
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115160840.png" alt="image-20201115160840797"></p>
+<p>这些数据并不是我们想要的。为什么会得到这样的结果呢？因为数据库并不知道应该怎样将这些行组织在一起，因此只能从employees表中取出每一行，然后将每一行和office_locations 表中的每一行进行配对。如果需要更有意义的结果，必须告诉数据库怎样组织这些表的关系，代码清单如下：</p>
+<blockquote>
+<p>两个表的连接</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SELECT*</span><br><span class="line">	FROM emplyees</span><br><span class="line">	JOIN office_location</span><br><span class="line">	ON emplyees.office_location_id&#x3D;office_location.office_location_id;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115161821.png" alt="image-20201115161820981"></p>
+<p>这条语句可以返回我们所需要的数据集：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">select emplyees.name,office_location.location_name</span><br><span class="line">from emplyees</span><br><span class="line">join office_location</span><br><span class="line">on emplyees.office_location_id&#x3D;office_location.office_location_id;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115162232.png" alt="image-20201115162232315"></p>
+<p>两个或者多个表查询称为连接(join)。执行连接还可以使用另一种语法，可以在SQL语句的FROM部分列出所有的表，然后再WHERE子句中连接这些表即可：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SELECT *</span><br><span class="line">FROM emplyees,office_location</span><br><span class="line">WHERE emplyees.office_location_id &#x3D; office_location.office_location_id;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115162857.png" alt="image-20201115162857038"></p>
+<p>尽管两者看上去区别并不大，但是前一种连接查询（称为ANSI join）对于关系的区分更为清晰。如果上述查询中有WHRER子句，那么这个子句中的每一个部分都会用于数据行的过滤，而不会用于定义表之间的关系。</p>
+<p>emplyees表的offic_location_id列引用了office_locations表中同名的列。这一列称为外键(forign key),表示引用其他表中列的列。在数据库中设置外键关系是可选的操作，然而这么做可以优化查询功能，因为数据库会知道针对这个列的连接操作和过程操作是预料之中的。</p>
+<p>定义外键还可以强制保证引用的完整性：在emplyees表中，office_location_id的取值不可以超出office_locations表中对应的取值范围。反过来，在emplyees表中存在的office_location_id不可以在office_locationa表中删除，每一个员工都必须有合法的办公地点。</p>
+<p>如果在定义表时忽略了外键关系，那么两个表之间就没有引用完整性：引用的列中可以包含被连接的表中不存在的数据。不过有时候者正是你所需要的。</p>
+<p>==<strong><em>什么时内连接？什么时外连接？</em></strong>==</p>
+<p>默认情况下，两个表中满足匹配条件的行都会包含在连接内。此外还可以指定连接操作中的一个或两个表中的所有行都包含在连接中，用NULL填补缺失的匹配。</p>
+<p>office_location 表中包含一些在employees表中没有引用的数据行。这肯是因为这家公司目前还有空的办公地点。上面的代码中没有出现这个办公地点。</p>
+<p>在查询的JOIN字句中，如果指定的是LEFT OUTER JOIN, 那么结果中会包含来自查询中左侧的所有行，在右侧没有匹配的地方则填上NULL。RIGHT OUTER JOIN则是相反的操作。</p>
+<blockquote>
+<p>右外连接查询</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SELECT *</span><br><span class="line">	FROM emplyees</span><br><span class="line">	RIGHT OUTER JOIN office_location</span><br><span class="line">	ON emplyees.office_location_id&#x3D;office_location.office_location_id;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115170013.png" alt="image-20201115170003352"></p>
+<p>此查询为每一个location_name都返回了一条结果，不论其对应的位置有没有雇员在办公：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SELECT emplyees.name,office_location.location_name</span><br><span class="line">FROM emplyees</span><br><span class="line">RIGHT OUTER JOIN office_location</span><br><span class="line">ON emplyees.office_location_id&#x3D;office_location.office_location_id;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115170852.png" alt="image-20201115170852534"></p>
+<p>左外连接和右外连接还可以同时进行，在两个表中对于不存在的项都填入NULL，使用的语法是FULL OUTER JOIN。在employees表和office_locations表之间不能执行这种连接，因为office_location_id是一个外键关系：不可能有员工工作在数据库中不存在的地点。</p>
+<p><strong><u><em>SQL能对数据库中的数据进行分析吗？</em></u></strong></p>
+<p>SQL包含了很多可以对列执行计算的函数。如果你有使用关系式数据库的经验，那么你可能使用过计算表中行数的COUNT函数：</p>
+<p><code>SELECT COUNT(*) from enployees;</code></p>
+<p>此查询返回的是employees表中行的数目。</p>
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115175516.png" alt="image-20201115175515996"></p>
+<p>下表定义了一个员工工资表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; create table salaries (employee_number int not null primary key auto_increment,annual_salary VARCHAR(20),last_update_date VARCHAR(20));</span><br><span class="line">mysql&gt; INSERT INTO salaries values(1,20000,2013-06-29),(2,12000,2013-06-29),(3,6000,2012-06-10),(4,6000,2013-06-16),(5,12000,2013-05-26);</span><br><span class="line">mysql&gt; select * from salaries;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115191021.png" alt="image-20201115191021437"></p>
+<p>SUM函数计算某一指定列的所有行的总和。财务部门可以通过对annual_salary应用这个函数计算年工资总开销。</p>
+<blockquote>
+<p>计算一列的总和</p>
+</blockquote>
+<p><code>mysql&gt; select sum(annual_salary) from salaries;</code></p>
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115191855.png" alt="image-20201115191855084"></p>
+<p>还可以首先将一些具有同样特征的行分组，然后再利用这些函数对某个类进行计算操作。例如，如果想要查看公司中每一个职位的平均工资，需要使用AVG函数，并且根据员工的职位进行分组。</p>
+<blockquote>
+<p>使用GROUP BY 子句</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">select e.title,avg(s.annual_salary)</span><br><span class="line">   from emplyees e</span><br><span class="line">   join salaries s</span><br><span class="line">   on e.employee_number&#x3D;s.employee_number</span><br><span class="line">   group by e.title;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115192715.png" alt="image-20201115192715794"></p>
+<p>在查询中包含了title列之后，需要指定GROUP BY子句，否则数据库不知道如何为不同的职位组织数据。如果没有这个子句，则产生的数据是无意义的：计算了年度工资栏的平均值，然后将原表中的第一行数据（即CEO)用作title列。</p>
+<blockquote>
+<p>注意：上述示例中使用的表和列都包含一些很长很啰嗦的名字。上面的代码清单使用表定别名，别名的作用是可以在查询过程中对表重命名，在这个例子中将表重命名为更短的名字。</p>
+<p>如果要将一个表和自己连接，那么需要为每一个表创建一个别名，否则在连接或使用WHERE子句时数据库不知道引用的是哪一个实例。</p>
+</blockquote>
+<p><u><strong><em>怎样将数据持久化到数据库中？</em></strong></u></p>
+<p>到现在为止，我们只是通过SQL查询表中已有的数据。通过INSERT语句可以向表中插入数据，通过UPDATE语句可以修改已有的行，通过DELETE语句可以删除行。</p>
+<p>INSERT语句包含要插入某张表的数据：</p>
+<p><code>INSERT INTO emplyees VALUES （1，&#39;Bob Smith&#39;,&#39;CEO&#39;,&#39;1,Pine Drive&#39;,CURDATE(),1);</code></p>
+<p>插入多行数据可以使用同样的方法，提供的是用逗号隔开的表示行的元素的列表：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">INSERT INTO emplyees VALUES</span><br><span class="line">(2,&quot;Alice Smith&quot;,&quot;CEO&quot;,&quot;1,Pine Drive&quot;,CURDATE(),1),</span><br><span class="line">(3,&quot;Cassandra Williams&quot;,&quot;Developer&quot;,&quot;336,Cedar Court&quot;,CURDATE(),2),</span><br><span class="line">(4,&quot;Dominic Taylor&quot;,&quot;Receptionist&quot;,&quot;74A,High Road&quot;,CURDATE(),2),</span><br><span class="line">(5,&quot;Eric Twinge&quot;,&quot;Developer&quot;,&quot;29,Acacia Avenue&quot;,CURDATE(),1);</span><br></pre></td></tr></table></figure>
+
+<p>还可以插入行的部分内容，前提是没有提供列用NULL代替不会影响约束条件，或者是有默认值。在语句中要给出具体要更新的列：</p>
+<p><code>INSERT INTO emplyees(employee_number,name,title,office_location_id)</code></p>
+<p><code>VALUES(6,&quot;Frank Roberts&quot;,&quot;Developer&quot;,&quot;2&quot;);</code></p>
+<p>更新数据时，需要指定具体要更新的列以及新的值，还可以提供表示要更新的行的匹配条件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">UPDATE emplyees</span><br><span class="line">set home_address&#x3D;&quot;37,King Steet&quot;</span><br><span class="line">where employee_number&#x3D;6;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115201145.png" alt="image-20201115201144928"></p>
+<p>如果通过主键匹配行，那么根据定义，只更新一行数据，因为主键唯一标识一行。此外，表也会针对主键建立索引，因此数据库应该可以瞬时定位要跟滚动行。</p>
+<p>如果在UPDATE语句中提供了WHERE子句，那么更新操作会针对所有行进行。</p>
+<p>删除行也可以通过WHERE子句来指定要删除的行：</p>
+<p>DELETE FROM emplyees WHERE name=”Frank Roberts”;</p>
+<p>一定要小心！如果忽略了WHERE子句，那么所有的行都会被删除；</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select count(*) from emplyees;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115202042.png" alt="image-20201115202041953"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; delete from emplyees;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115202255.png" alt="image-20201115202255794"></p>
+<p>如果要修改表中的数据，总是应该使用事务。这样的话，在提交事务之前，数据库允许你ROLLBACK(回滚)任何错误。</p>
+<p><strong><u><em>什么是视图？</em></u></strong></p>
+<p>为了方便起见，我们可以将一个常用的查询或连接设置为一个“虚拟表”，这个虚拟表称为视图（view)。对于需要在数据库控制台直接运行多个查询的开发者或者运维人员来说，视图往往可以提供帮助。</p>
+<p>如果经常需要通过一条查询来查找员工及其工作地点，那么通过下面的语句可以创建一个反映这些信息的视图：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">CREATE VIEW employees_and_locations AS</span><br><span class="line">SELECT employee_number,name,location_name,address</span><br><span class="line">FROM emplyees</span><br><span class="line">JOIN office_location</span><br><span class="line">ON emplyees.office_location_id&#x3D;office_location.office_location_id;</span><br></pre></td></tr></table></figure>
+
+<p>然后就可以向普通表一样查询这个视图了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from employees_and_location;</span><br></pre></td></tr></table></figure>
+
+<p>还可以从一个视图中删除数据行。当然，引用完整性的一般性原则在这里也要遵循。此外还可以添加行。如果视图定义中的列有缺失，那么会使用NULL值。如果对应的列不允许使用NULL值，那么这一行数据就不能插入到视图中。</p>
+<p>一般情形下，不建议从视图中删除数据。试图太轻量级了，很容易修改其定义，因此当某个列定义从视图中移除时很容易连带地插入NULL值。</p>
+<p><strong><em>==DDL和DML是什么?==</em></strong></p>
+<p>到目前为止，我们讨论的例子仅仅和数据的操纵有关。SQL还可以用于创建，删除和修改表。数据操纵语言（Data Manipulation Language,DML)通过SELECT,INSERT,UPDATE和DELETE关键字操纵数据。数据定义语言(Data Definition Language,DDL)的用途则是创建和操纵表的结构。</p>
+<p>创建表的语句是CREATE TABLE语句。这个语句包含了列的列表以及每一列的数据类型定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; CREATE TABLE meeting_rooms (</span><br><span class="line">    -&gt; meeting_room_id   INT,</span><br><span class="line">    -&gt; office_location_id  INT,</span><br><span class="line">    -&gt; meeting_room_name VARCHAR(100)</span><br><span class="line">    -&gt; );</span><br></pre></td></tr></table></figure>
+
+<p>这条语句会创建一个带有3个列的表，其中两个列的类型为INT，另外一列的类型为VARCHAR(100),即最长为100个字符的字符串。注意，不同数据中的合法数据类型可能会有所不同。你需要在数据库供应商提供的最新文档中查看哪些类型是合法的。</p>
+<p>在这个表中尽管有一个名为office_location_id的列，但是没有指向office_locations表的引用，在此列中没有针对可接受数据的引用完整性规则。</p>
+<p>如你所想，DDL不只可以创建表，还可以修改表的定义，例如添加一个列：</p>
+<p><code>ALTER TABLE meeting_rooms ADD COLUMN telephone_extension VARCHAR(100);</code></p>
+<p>对meeting_rooms表执行SELECT操作时会显示这一列，就好像这一列一直存在一样。如果这个表已经有数据了，那么这一列就会为空，因此显示一个NULL值。在ALTER TABLE语句中可以指定默认值。</p>
+<p>要删除(drop)一列，可以运行下列语句：</p>
+<p><code>ALTER TABLE meeting_rooms</code></p>
+<p><code>ADD FOREIGN KEY (office_location_id)</code></p>
+<p><code>REFERENCES office_locations(office_locaton_id);</code></p>
+<p>创建了这个约束之后，只有合法的office_location_id值才能插入meeting_rooms表中的那一列。如果在这一列中已经有数据不满足约束条件，那么这条语句会被拒绝。</p>
+<p>还可以增加其他任何类型的约束。例如定义一个不允许NULL值的列，或定义一个列只允许接受某个范围内的整数值。</p>
+<p><strong><u><em>如何加速低效的查询？</em></u></strong></p>
+<p>看一下之前的employees表，记录会按顺序保存在磁盘上，很可能是按照employee_number列的顺序保存的，因此101号员工的数据会保存在100号员工之后，以此类推。</p>
+<p>在大部分情况下，通过这种方式保存数据是意义不是太大，因为很少有情况需要根据员工工号的顺序获得员工列表。</p>
+<p>针对这些数据的一个可能的查询是查找所有在某个特定办公地点工作的员工：</p>
+<p><code>SELECT * FROM employees WHERE office_location_id=2;</code></p>
+<p>此查询需要按顺序检查每一行是否满足WHERE子句。如果表中有数千行数据时，这条查询会耗费一阵子时间，特别是在没有任何一行于条件匹配时。</p>
+<p>通过给这一列增加索引，数据库可以直接查询这一列，得到指向行位置的直接引用。</p>
+<p><img src="https://gitee.com/wu-sihui/images/raw/master/img/20201115212423.png" alt="image-20201115212423252"></p>
+<p>这张表还会额外保存office_location_id 的分组信息，数据库会通过这些信息查找办公地点对应的数据行。这里需要付出的代价是需要更多的磁盘空间来保存这些索引</p>
+<blockquote>
+<p>创建索引</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">create index office_loc_idx on employees(office_location_id);</span><br></pre></td></tr></table></figure>
+
+<p>创建了索引之后，向employees表插入数据时还会在索引中创建一个条目，可能会导致插入数据耗费的时间更长。带来的好处是查询更快了，特别是在表增长到数千行的规模时。</p>
+<p><strong><em>==如果SQL不能满足需求怎么办？==</em></strong></p>
+<p>存储过程(stored procedure)提供的功能比SQL 提供的简单创建，读取，更新和删除功能更为强大。在存储过程中可以执行更多的过程式步骤。</p>
+<p>下面给出一个需要创建存贮过程的例子：为超过一年没有加薪的员工加薪。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">CREATE PROCEDURE annual_salary_raise (</span><br><span class="line">   IN percent INT,</span><br><span class="line">   OUT total_updated INT</span><br><span class="line">   )</span><br><span class="line">   BEGIN</span><br><span class="line">   SELECT COUNT(*)</span><br><span class="line">   INTO total_updated</span><br><span class="line">   FROM salaries</span><br><span class="line">   WHERE last_update_date&gt;DATE_SUB(CURDATE(),INTERVAL 1 YEAR);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">UPDATE salaries</span><br><span class="line">SET annual_salary&#x3D;annual_salary*((100+percent)&#x2F;100),</span><br><span class="line">    last_update_date&#x3D;CURDATE()</span><br><span class="line">WHERE last_update_date&gt;DATE_SUB(CURDATE(),INTERVAL 1 YEAR);</span><br><span class="line">END;</span><br></pre></td></tr></table></figure>
+
+<p>这个存储过程接受两个参数：一个IN参数，表示工资增长的百分数：一个OUT参数，可以看成是存储过程的返回值。这里传入一个语柄，存储过程通过语柄设置值，然后再运行完存储过程之后就可以通过语柄读取值。在这个例子中，OUT参数保存的是更新的行数。IN参数和OUT参数的数目可以根据自己的需求随意指定。</p>
+<p>SELECT 语句的形式也不相同，将COUNT函数的结果填入total_updated OUT参数。如果SELECT语句返回0行或多余1 行数据，则这条查询会失败。</p>
+<p>这个存储过程对那些已经超出一年没有更新的行应用百分比更新。MySQL提供了一个用于操纵DATE数据类型的DATE_SUB函数——-这个例子中，这个函数计算的是C</p>
+
+        </div>
+    
+
+</div>
+            
+                
+<div class="post">
+
+    <div class="post-header index">
+        <h1 class="title">
             <a href="/2020/11/09/Java%E5%9F%BA%E7%A1%80/">
                 Untitled
             </a>
@@ -1093,6 +1289,10 @@
         <ul>
             
             <li>
+                <a class="footer-post" href="/2020/11/15/Java%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%92%8C%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E6%95%B4%E5%90%88/">Untitled</a>
+            </li>
+            
+            <li>
                 <a class="footer-post" href="/2020/11/09/Java%E5%9F%BA%E7%A1%80/">Untitled</a>
             </li>
             
@@ -1102,10 +1302,6 @@
             
             <li>
                 <a class="footer-post" href="/2020/11/03/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Untitled</a>
-            </li>
-            
-            <li>
-                <a class="footer-post" href="/2020/10/30/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2%E6%96%87%E7%AB%A0/">我的第一篇博客文章</a>
             </li>
             
         </ul>
