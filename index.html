@@ -168,7 +168,7 @@
 
     
         <div class="content">
-            <h1 id="Java应用程序和数据库的整合"><a href="#Java应用程序和数据库的整合" class="headerlink" title="Java应用程序和数据库的整合"></a>Java应用程序和数据库的整合</h1><p>面向对象语言能够用丰富的方式对真实的世界进行建模。。关系数据库将数据持久化在表格中，而表格通常是一种更平坦的数据结构，对同样的表达能力具有局限性。</p>
+            <h1 id="UJava应用程序和数据库的整合"><a href="#UJava应用程序和数据库的整合" class="headerlink" title="UJava应用程序和数据库的整合"></a>UJava应用程序和数据库的整合</h1><p>面向对象语言能够用丰富的方式对真实的世界进行建模。。关系数据库将数据持久化在表格中，而表格通常是一种更平坦的数据结构，对同样的表达能力具有局限性。</p>
 <p>本章讨论如何连接和使用数据库，以及如何将Java数据类型持久化到数据库中。本章所有示例都使用MySQL数据库，包括通过MySQL控制台访问(用mysql&gt;提示符表示)，以及通过Java的数据库接口访问。</p>
 <h2 id="SQL简介"><a href="#SQL简介" class="headerlink" title="SQL简介"></a>SQL简介</h2><p>SQL是一种抽象的声明式语言，用于在关系数据库中执行查询和数据操作。SQL是一种标准，和具体的数据库实现无关。如今基本上所有正在使用的成熟的关系数据库产品都支持SQL。</p>
 <p><strong><u><em>如何通过SQL从关系数据库检索数据？</em></u></strong></p>
@@ -337,7 +337,130 @@
 
 <p>这个存储过程接受两个参数：一个IN参数，表示工资增长的百分数：一个OUT参数，可以看成是存储过程的返回值。这里传入一个语柄，存储过程通过语柄设置值，然后再运行完存储过程之后就可以通过语柄读取值。在这个例子中，OUT参数保存的是更新的行数。IN参数和OUT参数的数目可以根据自己的需求随意指定。</p>
 <p>SELECT 语句的形式也不相同，将COUNT函数的结果填入total_updated OUT参数。如果SELECT语句返回0行或多余1 行数据，则这条查询会失败。</p>
-<p>这个存储过程对那些已经超出一年没有更新的行应用百分比更新。MySQL提供了一个用于操纵DATE数据类型的DATE_SUB函数——-这个例子中，这个函数计算的是C</p>
+<p>这个存储过程对那些已经超出一年没有更新的行应用百分比更新。MySQL提供了一个用于操纵DATE数据类型的DATE_SUB函数——-这个例子中，这个函数计算的是CURDATE(表示今天的日期)之前一年的日期。这条更新语句还会将最后更新的日期设置为CURDATE，因此被更新的行在一年之内不会被更新。</p>
+<blockquote>
+<p>调用MySQL存储过程，实现4%的涨薪</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select curdate();</span><br><span class="line"></span><br><span class="line">mysql&gt;select * from salaries;</span><br><span class="line"></span><br><span class="line">mysql&gt;call annual_salary_raise(4,@updated_count);</span><br><span class="line"></span><br><span class="line">mysql&gt;select * from salaries;</span><br><span class="line"></span><br><span class="line">mysql&gt;select @updated_count;</span><br></pre></td></tr></table></figure>
+
+<p>存储过程特别适合于批量操作一系列语句，通过某种定制的方式操纵数据，上述存储过程就是这样一个例子。另一种用法是在触发器（trigger）中使用。当某个特定的数据库事件发生时，例如删除或更新一行数据时，可以配置在动作发生之前或之后运行一个存储过程，也可以用一个存储过程替代相应的动作。</p>
+<p>触发器的一个实际用法是记录数据库事件。当一个敏感的表（例如记录员工工资的财务表）被更新时，可以设置一个存储过程，在向这张表插入数据之前和之后向一张辅助的审计表中插入数据，如果事后有任何分歧时可以在审计表中有据可查。</p>
+<p><strong><em>==什么是事务？==</em></strong></p>
+<p>上上个代码所展示的存储过程存在一个问题，即OUT参数中返回的更新的行数可能和实际更新的行数不一致。这个存储过程执行了两个操作：首先，计算要更新的行的数目，然后执行实际的更新操作。如果有一个客户在运行annual_salary_raise存储过程的同时，另一个客户对salaries表进行更新并且更新的数据会被存储过程中的更新语句影响，那么第二个客户的更新操作可能会发生在第一个客户通过SELECT统计行数之后，第一个客户通过UPDATE更新薪资数据之前。</p>
+<p>通过将这个过程事务化，就可以避免以上竞争条件的发生。</p>
+<p>不论在什么领域(数据库领域或者其他领域)中，事务(transaction)都要满足4个条件，这个条件统称为ACID：</p>
+<ul>
+<li><p><strong>原子性</strong>(Atomic)——–事务中的内容要么全部以一个 整体完成，要么完全没有做。不可能在数据库中看到事务只执行了一半的状态。</p>
+</li>
+<li><p><strong>一致性</strong>(Consistent)——–执行完事务之后，数据库满足作用域的所有要求。例如，当有两方进行支付时，从一方借记的金额应该匹配另一方存入的金额。</p>
+</li>
+<li><p><strong>隔离性</strong>(Isolated)———每一个并行运行的事务其行为看上去都应该好像只有这一个事务在数据库中运行。</p>
+</li>
+<li><p><strong>持久性</strong>(Durable)———事务一旦被提交之后，就永久地提交了。数据库中任何后续的修改，例如更新或崩溃，都不会对已提交的事务造成影响。</p>
+</li>
+<li><p>为了将上上个代码中存储过程持久化，必须通过START TRANSACTION语句开始一个事务，并最终通过COMMIT语句成功提交事务。</p>
+<blockquote>
+<p>使用事务</p>
+</blockquote>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">CREATE PROCEDURE annual_salary_raise_transactional (</span><br><span class="line">	IN percent INT,</span><br><span class="line">	OUT total_updated INT</span><br><span class="line">)</span><br><span class="line">BEGIN</span><br><span class="line">	START TRANSACTION;</span><br><span class="line">	SELECT COUNT(*)</span><br><span class="line">	...</span><br><span class="line">	...&lt;参见上上个代码&gt;</span><br><span class="line">	...</span><br><span class="line">	WHERE last_update_date&lt;DATE_SUB(CURDATE(),INTERVAL 1 YEAR);</span><br><span class="line">	COMMIT;</span><br><span class="line">END;</span><br></pre></td></tr></table></figure>
+
+<p>当事务在运行时，其他连接在尝试更新salaries表时都会被阻塞，直到这个事务完成执行。</p>
+<p>在运行存储过程的过程中，如果发现数据库处在不一致的状态，或者存储过程中有一些条件没有满足，可以自己中止事 务。通过ROLLBACK（回滚）语句种植事务。</p>
+<p>回滚通常是由数据库日志管理的，回滚时反向执行从事务开始时的所有日志。其他运行的事务可能依赖于被回滚的事务的结果，在这种情况下，这些依赖的事务也会被回滚。</p>
+<p><strong><em>==什么是NoSQL==</em></strong></p>
+<p>NoSQL是一个覆盖性的术语，指的是所有不严格遵循关系式数据库模型的数据库。这些数据库处理的通常是非范式化的数据，通常以键-值对，全文档或图的形式保存数据，目的是让数据的检索速度尽可能地块，从而使得应用程序的相应能力更强。在操纵海量数据时，例如TB级的数据甚至PB级的数据时，对相应能力有特别的要求。</p>
+<p>在NoSQL领域，没有和SQL对应的访问标准，因为每一个数据库都以自己的方式存储数据。NoSQL的一个缺点就是一旦开始使用某个NoSQL数据库产品，那么就会被绑定到某个特定的厂商，因为迁移的过程需要在不同数据库的模型之间映射，因此会有特异性而且非常费劲。</p>
+<p>下面是一些流行的NoSQL数据库产品：</p>
+<ul>
+<li>MognoDB——-数据以JSON对象的形式保存，而且类似的对象之间不一定有相同的字段。</li>
+<li>Cassandra———数据保存在列族(column family)中。和表类似，但是不要求所有的行有相同的列。</li>
+<li>Memcached———分布式键-值存储缓存。</li>
+<li>Redis———集群化的持久键-值存储。</li>
+</ul>
+<h2 id="JDBC-整合Java和数据库"><a href="#JDBC-整合Java和数据库" class="headerlink" title="JDBC:整合Java和数据库"></a>JDBC:整合Java和数据库</h2><p><strong><em>==如何通过Java连接一个关系数据库？==</em></strong></p>
+<p>Java Database Connectivity(JDBC)是构建在Java标准库连接机制。在使用JDBC连接数据库时，必须确保供应商的JDBC实现位于classpath中。在Java6之前，需要通过调用Class.forName(“<Vendor class>“)确保类加载器已经加载了数据库供应商为JDBC编写的驱动程序。现在这个过程已经被服务提供者机制自动化了，后者会在JAR的META-INF/services目录中提供一个查找项。</p>
+<p>要创建连接，必须以URL的形式向JDBC提供相关的连接参数</p>
+<blockquote>
+<p>验证一个活跃的数据库连接</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">connectToDb</span><span class="params">()</span> <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line">		<span class="keyword">final</span> Connection connection=DriverManager.getConnection(</span><br><span class="line">				<span class="string">&quot;jdbc:mysql://localhost:3306/company_db&quot;</span>,<span class="string">&quot;nm&quot;</span>,<span class="string">&quot;password&quot;</span>);</span><br><span class="line">		assertFalse(connection.isClosed());</span><br><span class="line">		connection.close();</span><br><span class="line">		assertTrue(connection.isClosed());</span><br></pre></td></tr></table></figure>
+
+<p>传递给DriverManager.getConnection的连接字符串传入了一个名为company_db的数据库的完整URL，这个数据库运行在本地服务器上，端口号默认的330户名为nm，密码为password。这个测试证实了可以创建连接，验证连接成功，然后关闭连接。</p>
+<p><strong><em>==如何通过Java执行SQL查询？==</em></strong></p>
+<p>建立好了数据库连接后，就可以通过执行SQL操作来检索和操纵数据。</p>
+<blockquote>
+<p>通过JDBC查询数据库，并将查询结果填入普通的Java类型。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">retrieveRows</span><span class="params">()</span> <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line">		<span class="keyword">final</span> Connection connection=DriverManager.getConnection(</span><br><span class="line">				<span class="string">&quot;jdbc:mysql://localhost:3306/company_db&quot;</span>,</span><br><span class="line">				<span class="string">&quot;nm&quot;</span>,</span><br><span class="line">				<span class="string">&quot;password&quot;</span>);</span><br><span class="line">		<span class="keyword">final</span> java.sql.Statement stmt=connection.createStatement();</span><br><span class="line">		<span class="keyword">final</span> ResultSet rs=stmt.executeQuery(</span><br><span class="line">				<span class="string">&quot;select employee_number,name from employees&quot;</span>);</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">final</span> Map&lt;Integer,String&gt; employeeMap=<span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">while</span>(rs.next()) &#123;</span><br><span class="line">			<span class="keyword">final</span> <span class="keyword">int</span> employeeNumber=rs.getInt(<span class="string">&quot;employee_number&quot;</span>);</span><br><span class="line">			<span class="keyword">final</span> String name=rs.getString(<span class="string">&quot;name&quot;</span>);</span><br><span class="line">			employeeMap.put(employeeNumber,name);</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">final</span> Map&lt;Integer,String&gt; expectedMap=<span class="keyword">new</span> HashMap&lt;Integer,String&gt;()&#123;&#123;</span><br><span class="line">			put(<span class="number">1</span>,<span class="string">&quot;Bob Smith&quot;</span>);</span><br><span class="line">			put(<span class="number">2</span>,<span class="string">&quot;Alice Smith&quot;</span>);</span><br><span class="line">		&#125;&#125;;</span><br><span class="line">		</span><br><span class="line">		assertEquals(expectedMap,employeeMap);</span><br><span class="line">		</span><br><span class="line">		rs.close();</span><br><span class="line">		stmt.close();</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>数据库连接提供了语句，语句运行查询，查询返回结果集。</p>
+<p>ResultSet接口具有类似Iterator的访问方式。当ResultSet实例打开时，数据库有一个打开的游标(sursor),每一次调用next时都会将游标移动至下一行。这个方法返回一个Boolean值，如果返回false则表明该查询中没有更多的行。</p>
+<p>每一个数据库厂商都提供了自己的JDBC类的实现，例如Statement，ResultSet和Connection类。因此，厂商应该自行提供从数据库数据类型到Java类型的映射。通常情况下，这都不会是大问题，因为大部分数据类型都有逻辑上等价的类型。在上述代码中，employee_number列是MySQL数据库中的Integer类型，因此对ResultSet调用getInt会将数据转换为Java的int类型。类似的，name列的类型是VARCHAR，它会被映射为一个String。</p>
+<p>getXXX方法是被重载的方法，可以接受表示列名字符串作为参数，也可以接受表示列索引（从1开始）的int作为参数。</p>
+<p><strong><em>==如何避免SQL注入攻击？==</em></strong></p>
+<p>如果有某条查询需要反复运行，数据库可以协助完成查询准备，从而得到更快且更安全的查询。</p>
+<p>使用查询参数（query parameter）可以让数据库编译查询，并对查询做好预处理然后只要提供参数就可以执行实际的查询。</p>
+<blockquote>
+<p>使用查询参数</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span> </span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">queryParameters</span><span class="params">()</span> <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line">		<span class="keyword">final</span> PreparedStatement pStmt=conn.prepareStatement(</span><br><span class="line">				<span class="string">&quot;insert into office_locations values (?,?,?,NULL)&quot;</span>);</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">final</span> Map&lt;String,String&gt; locations=<span class="keyword">new</span> HashMap&lt;String,String&gt;()&#123;&#123;</span><br><span class="line">			put(<span class="string">&quot;London&quot;</span>,<span class="string">&quot;picadilly Square&quot;</span>);</span><br><span class="line">			put(<span class="string">&quot;New York&quot;</span>,<span class="string">&quot;Union Plaza&quot;</span>);</span><br><span class="line">			put(<span class="string">&quot;Paris&quot;</span>,<span class="string">&quot;Revolution Place&quot;</span>);</span><br><span class="line">		&#125;&#125;;</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">int</span> i=<span class="number">1</span>;</span><br><span class="line">		<span class="keyword">for</span> (String location:locations.keySet()) &#123;</span><br><span class="line">			pStmt.setInt(<span class="number">1</span>,i);</span><br><span class="line">			pStmt.setString(<span class="number">2</span>,location);</span><br><span class="line">			pStmt.setString(<span class="number">3</span>,locations.get(location));</span><br><span class="line">			pStmt.execute();</span><br><span class="line">			i++;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		pStmt.close();</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">final</span> Statement stmt=conn.createStatement();</span><br><span class="line">		<span class="keyword">final</span> ResultSet rs=stmt.executeQuery(</span><br><span class="line">				<span class="string">&quot;select count(*) from office_locations&quot;</span>+</span><br><span class="line">		<span class="string">&quot;where location_name in(&#x27;London&#x27;,&#x27;New York&#x27;,&#x27;Paris&#x27;)&quot;</span>);</span><br><span class="line">		assertTure(rs.next());</span><br><span class="line">		assertEquals(<span class="number">3</span>,rs.getInt(<span class="number">1</span>));</span><br><span class="line">		</span><br><span class="line">		rs.close();</span><br><span class="line">		stmt.close();</span><br></pre></td></tr></table></figure>
+
+<p>在上上一个代码中，查询是通过一个Statement对象执行的，但是在这个例子中，查询使用了一个PreparedStatement对象。创建一个PreparedStatement对象时，需要提供要运行的查询。不同的查询调用要使用的变量参数通过问号表示。</p>
+<p>每一次要执行查询时，通过setXXX方法设置参数，指明查询中对应数据的类型。setXXX方法可以看成是ResultSet中对应的getXXX。同样，要注意这里的参数索引是从1而不是0开撕的。</p>
+<p>使用带有特定数据类型的setXXX方法而不是将参数值硬编码为String可以实现一定程度的安全性，避免类似SQL注入这类攻击。</p>
+<p>假设有一个Web服务要根据某一个列的ID显示数据库中的内容。这个网络服务是URL可能具有这样的形式：/showResults?id=3。这个网络服务可以简单地实现：接收解析后的查询参数，然后放在查询内直接传入数据库：</p>
+<p><code>stmt.excuteQuery(&quot;select * from records where id=&quot;+queryParameters.get(&quot;id&quot;));</code></p>
+<p>然而，恶意的用户可以将id参数的值替换为“3；DROP TABLE USERS;”。这样的话，以上代码就变成了两条查询：</p>
+<p><code>SELECT * FROM records WHERE id=3;DROP TABLE users;</code></p>
+<p>如果刚好不幸有一个名为users的表，那么这个表就会被删除。</p>
+<p>然而如果这个查询是通过PreparedStatement执行的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> PreparedStatement ps=conn.prepareStatement(<span class="string">&quot;select * from records where id=?&quot;</span>);</span><br><span class="line">ps.setInt(<span class="number">1</span>,queryParameter.get(<span class="string">&quot;id&quot;</span>));</span><br><span class="line">ps.execute();</span><br></pre></td></tr></table></figure>
+
+<p>当查询参数尝试将值设置为int’时，会在运行时抛出异常，因为恶意的字符串无法转换为int。</p>
+<p>对于要进入数据库的输入，总是应该进行审查，而且只要条件允许，就尽量使用类型系统的帮助。</p>
+<p><strong><em>==如何通过Java运行存储过程？==</em></strong></p>
+<p>调用存储过程的方式和创建预处理语句的方式类似。通过下面的代码测试可以运行之前定义好的salary_update存储过程。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Tes</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">callStoresProc</span><span class="params">()</span> <span class="keyword">throws</span> SQLExcepton </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> CallableStatement stmt =conn.prepareCall(<span class="string">&quot;&#123;call</span></span><br><span class="line"><span class="string">          annual_salary_raise(?,?)&#125;&quot;</span>);</span><br><span class="line">          stmt.setInt(<span class="number">1</span>,<span class="number">4</span>);</span><br><span class="line">          stmt.registerOutParameter(<span class="number">2</span>,Types.INTEGER);</span><br><span class="line">                                                   </span><br><span class="line">          stmt.execute();</span><br><span class="line">                                                   </span><br><span class="line">          <span class="keyword">int</span> updatedEmployees=stmt.getInt(<span class="number">2</span>);</span><br><span class="line">          assertEquals(<span class="number">1</span>,updateEmployees);                                         </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于这个测试，假定在运行之前，数据库中只有一名员工满足涨薪条件。</p>
+<p>对Connection对象调用prepareCall创建了一个CallableStatement对象。和Prepared-Statement对象类似，这里提供的是要在数据库中运行的语句，参数用问好表示。</p>
+<p>所有不同的参数都要设置，同时设置数据类型。注意JDBC对输出参数是区别对待的。在语句执行结束之后收集这些输出参数的值。</p>
+<p>调用存储过程的字符和具体的数据库相关：</p>
+<p><code>&#123;call ANNUAL_SALARY_RAISE(?,?)&#125;</code></p>
+<p>对于不同的厂商，这个字符串的结构会有所不同。要注意不同厂商发起调用的方式可能不同。例如，在Oracle PL/SQL中调用同名存储过程的字串如下所示：</p>
+<p><code>conn.prepareCall(&quot;BEGIN ANNUAL_SALART_RAISE(?,?);END;&quot;);</code></p>
+<p>这个调用是由BEGIN…END块而不是花括号包围。参数仍然通过问号来设置。</p>
+<p><strong><em>==如何管理数据库连接==</em></strong></p>
+<p>数据库的连接是一种源，而且创建连接的过程非常耗时，特别是连接需要在网络上协商建立时。创建数据库连接的过程往往比数据库操作本身还要耗时。</p>
+<p>和线程池采用的方法类似，应用程序通常会管理一个数据库连接池。</p>
+<p>有多个开源的库能够创建和管理连接池。这些库都遵循类似的方式：你要告诉库关于连接建立的细节，然后需要连接时，库就可以提供连接。库既可能创建一个新的连接，也可能会重用一个之前创建的连接，从而节省建立连接的时间。</p>
+<p>C3P0是一个管理连接的开源项目。</p>
+<blockquote>
+<p>使用连接池</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">connectionPools</span><span class="params">()</span> <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line"><span class="keyword">final</span> ComboPooledDataSource cpds=<span class="keyword">new</span> ComboPooledDataSource();</span><br><span class="line">cpds.setJdbcUrl(<span class="string">&quot;jdbc:mysql://localhost:3306/company_db&quot;</span>);</span><br><span class="line">cpds.setUser(<span class="string">&quot;nm&quot;</span>);</span><br><span class="line">cpds.setPassword(<span class="string">&quot;password&quot;</span>);</span><br><span class="line"><span class="keyword">final</span> Connection conn=cpds.getConnection();</span><br><span class="line">    <span class="keyword">final</span> Statement stmt=conn.createStatement();</span><br><span class="line">    <span class="keyword">final</span> ResultSet rs=stmt.executeQuery(</span><br><span class="line">    <span class="string">&quot;select count(*) from office_locations&quot;</span>+</span><br><span class="line">    <span class="string">&quot;where location_name in (&#x27;London&#x27;,&#x27;New York&#x27;,&#x27;Paris&#x27;)&quot;</span>);</span><br><span class="line">    assertTure(rs.next();</span><br><span class="line">              assertEquals(<span class="number">3</span>,rs.getInt(<span class="number">1</span>));</span><br><span class="line">               </span><br><span class="line">               DataSources.destroy(cpds);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>结束操作时不要关接池保存了对其创建的连接的引用，并且会周期性地通过一条简单的查询（例如SELECT 1 或者 SELECT 1 FROM DUAL 等，取决于具体的数据库）检查连接的健康状况。</p>
+<p>使用连接池的好处是让应用程序更能应对数据库中止服务的情形。如果数据库崩溃或者重启，则所有的连接都会丢失，因此这些连接的所有引用都会失效，当应用程序对象对这些连接发出新请求时，连接池会对重启后的数据库创建新的连接，因为连接池会探测到旧的连接已不可用。</p>
+<p><strong><em>==如何管理应用程序的数据库发布==</em></strong></p>
+<p>发布Java应用程序时，通常是以单元的方式构建和发布应用程序，任何升级也是一个整体的形式进行升级，用升级版本替换现有的二进制版本。</p>
+<p>而对于数据库来说并不总可以这么做，因为数据库中存储的数据必须在版本之间持久存在。</p>
+<p>幸好，有一些可以和现有构建系统很好地整合的工具，这些工具可以管理和执行数据库部署和升级。</p>
+<p>DBDeploy就是这样一种工具，这个工具可以直接和Maven或Ant协作。</p>
+<p>每一次要在新版本中修改数据时，请在构建中添加一个带计数的文件，这个计数比上一次数据库变更文件的计数大1.DBDeploy在数据库中管理一个表，在一个名为changlog的表中记录运行脚本的列表。如果DBDeploy发现在changelog表中有任何没有被记录的文件，那么DBDeploy就会按照数字顺序执行这些脚本。</p>
+<p>之后再次运行DBDeploy就会忽略这些文件，因为这些文件被记录为已经成功执行过。</p>
+<h2 id="利用内存数据库进行测试"><a href="#利用内存数据库进行测试" class="headerlink" title="利用内存数据库进行测试"></a>利用内存数据库进行测试</h2><p><strong><em>==在开发数据库时能不能维护一个一致的环境？==</em></strong></p>
+<p>在对一个需要访问数据库的应用程序进行活跃开发时，不容易将数据库维持在一个可维护的状态。有一种方法是使用一个和产品和集成环境中不同的数据库发行版：内存数据库。</p>
+<p>顾名思义，内存数据库中的内容在JVM关闭时会丢失。因此特别适合使用测试数据，因为我们并不关心测试数据的持久化，而是更关心应用程序和数据库之间的交互是否符合预期。内存数据库也运行在本地机器，因此也不需要管理网络流量，数据库也不需要处理多个客户端的复杂连接问题。</p>
+<p>一些开源的关系数据库提供了和SQL兼容的内存选项，H2就是一个这样的数据库。H2的设计很简单，不需要特别的代码启动数据库，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">connectToH2</span><span class="params">()</span> <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> Connection conn=DriverManager.getConnection(</span><br><span class="line">    <span class="string">&quot;jdbc:h2:mem:test;MODE=MySQL&quot;</span>,<span class="string">&quot;nm&quot;</span>,<span class="string">&quot;password&quot;</span>);</span><br><span class="line">    <span class="keyword">final</span> Statement stmt=conn,createStatement();</span><br><span class="line">    stmt.executeUpdate(<span class="string">&quot;create table teams(id INTEGER,name VARCHAR(100))&quot;</span>);</span><br><span class="line">    stmt.executeUpdate(<span class="string">&quot;insert into teams values(1,&#x27;Red Team&#x27;)&quot;</span>);</span><br><span class="line">    stmt.executeUpdate(<span class="string">&quot;insert into teams values(2,&#x27;Blue Team&#x27;)&quot;</span>);</span><br><span class="line">    stmt.executeUpdate(<span class="string">&quot;insert into teams values(3,&#x27;Green Team&#x27;)&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">final</span> ResultSet rs=stmt.executeQuery(<span class="string">&quot;select count(*) from teams&quot;</span>);</span><br><span class="line">    assertTure(rs.next());</span><br><span class="line">    assertEquals(<span class="number">3</span>,getInt(<span class="number">1</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>H2通过连接字串jdbc:h2:mem:test就可以创建名为test的内存数据库，操作行为和其他JDBC连接是一样的。teams表只有在测试运行时才可用——-这个表没有保存在任何位置，因此这个测试每一次都可以运行成功。如果连接的是真实数据库，那么在运行任何针对teams表的测试之前，都要确定这个表的当前状态。username和password参数在这里不重要。</p>
+<p>通过配置连接字串中设置可以自定义数据库的行为。连接字串jdbc:h2:mem;test;MODE=MySQL表示要求H2数据库理解MySQL的特性，即MySQL数据类型以及MySQL特有的SQL语言特性。</p>
+<p>将内存数据库和DBDeploy结合使用，在测试集运行之前可以将DBDeploy脚本导入新创建的H2数据库，然后测试就可以像连接到普通MySQL数据库一样运行。</p>
+<p>另外一种针对真实关系数据库测试的方式是打开的事务中运行，然后再测试结构（不论失败还是成功）时回滚事务。这种测试方式可能很高效，但是有风险。如果测试中会提交事务，那么就不能通过这种方式测试。此外，这种测试也依赖于真确的数据库状态。</p>
 
         </div>
     
