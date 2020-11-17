@@ -153,6 +153,94 @@
 
     <div class="post-header index">
         <h1 class="title">
+            <a href="/2020/11/17/%E4%B8%80%E4%B8%AA%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E7%9A%84%E6%81%B6%E6%B1%89%E5%8D%95%E4%BE%8B/">
+                Untitled
+            </a>
+        </h1>
+        <div class="post-info">
+            
+                <span class="date">2020-11-17</span>
+            
+            
+            
+        </div>
+    </div>
+
+    
+        <div class="content">
+            <h1 id="一个线程安全的恶汉单例"><a href="#一个线程安全的恶汉单例" class="headerlink" title="一个线程安全的恶汉单例"></a>一个线程安全的恶汉单例</h1><h3 id="一，什么是单例模式"><a href="#一，什么是单例模式" class="headerlink" title="一，什么是单例模式"></a>一，什么是单例模式</h3><p>就如同他的名字一样，‘单例’-就是只有一个实例。也就是说一个类在全局中最多只有一个实例存在，不能在多了，在多就不叫单例模式了。</p>
+<h4 id="1-用在哪里"><a href="#1-用在哪里" class="headerlink" title="1.用在哪里"></a>1.用在哪里</h4><p>单例模式一般用在对实例数量有严格要求的地方，比如说数据池，线程池，缓存，session回话等等。</p>
+<h4 id="2-在Java中构成的条件"><a href="#2-在Java中构成的条件" class="headerlink" title="2.在Java中构成的条件"></a>2.在Java中构成的条件</h4><ul>
+<li>静态变量</li>
+<li>静态方法</li>
+<li>私有构造器</li>
+</ul>
+<h2 id="二，单例模式的两种形态"><a href="#二，单例模式的两种形态" class="headerlink" title="二，单例模式的两种形态"></a>二，单例模式的两种形态</h2><p>1.懒汉模式</p>
+<blockquote>
+<p>线程不安全</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> Singleton unsingleton;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span>(unsingleton==<span class="keyword">null</span>) &#123;</span><br><span class="line">			unsingleton=<span class="keyword">new</span> Singleton();</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> unsingleton;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>2.饿汉模式</p>
+<blockquote>
+<p>线程安全</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> Singleton unsingleton=<span class="keyword">new</span> Singleton();</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> unsingleton;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Singleton singleton1=Singleton.getInstance();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="三，懒汉模式优化成线程安全"><a href="#三，懒汉模式优化成线程安全" class="headerlink" title="三，懒汉模式优化成线程安全"></a>三，懒汉模式优化成线程安全</h3><p>懒汉模式要变成线程安全的除了用饿汉模式之外，还有两种方法。</p>
+<p>1.加synchronized关键字</p>
+<blockquote>
+<p>此方法是最简单又有效的方法，不过对性能上会有所损失。比如两个线程同时调用这个实例，其中一个线程要等另一个线程调用完才可以继续调用。而线程不安全往往发生在这个实例在第一次调用的时候发生，当实例被调用一次后，线程是安全的，所以加synchronized就显得有些浪费性能。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> Singleton unsingleton;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span>(unsingleton==<span class="keyword">null</span>) &#123;</span><br><span class="line">			unsingleton=<span class="keyword">new</span> Singleton();</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> unsingleton;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>2.用“双重检查加锁”</p>
+<blockquote>
+<p>上个方法说到，线程不安全往往发生在这个实例在第一次调用的时候发生，当实例被调用一次后，线程是安全的。那有没有方法只有在第一次调用的时候采用synchronized关键字，而第一次后就不用synchronized关键字呢？答案是当然有的，就是用volatile来修饰变量，保持其可见性。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">volatile</span> Singleton unsingleton;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span>(unsingleton==<span class="keyword">null</span>) &#123;</span><br><span class="line">			<span class="comment">//只有当第一次访问的时候才会使用synchronized关键字</span></span><br><span class="line">			<span class="keyword">synchronized</span>(Singleton.class) &#123;</span><br><span class="line">			unsingleton=<span class="keyword">new</span> Singleton();</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> unsingleton;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>3.用“静态内部类”</p>
+<p>静态内部类的优点是：外部类加载时并不需要立即加载内部类，内部类不被加载则不去初始化INSTANCE，故而不占内存。即当SingleTon第一次被加载时，并不需要去加载SingleTonHoler，只有当getInstance()方法第一次被调用时，才会去初始化INSTANCE,第一次调用getInstance()方法会导致虚拟机加载SingleTonHoler类，这种方法不仅能确保线程安全，也能保证单例的唯一性，同时也延迟了单例的实例化。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> Singleton instatnce;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">SingletonHolder</span> </span>&#123;</span><br><span class="line">		<span class="keyword">private</span> <span class="keyword">static</span> Singleton instatnce=<span class="keyword">new</span> Singleton();</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> SingletonHolder.instatnce;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>那么，静态内部类又是如何实现线程安全的呢？首先，我们先了解下类的加载时机。</p>
+<p>类加载时机：JAVA虚拟机在有且仅有的5种场景下会对类进行初始化。</p>
+<ol>
+<li>遇到new, getstatic, setstatic 或者invokestatic这4个字节码指令时，对应的java代码场景为：new一个关键字或者一个实例化对象时， 读取或设置一个静态字段时(final修饰，已在编译期把结果放入常量池的除外)， 调用一个类的静态方法时。</li>
+<li>使用java.lang.reflect包的方法对类进行反射调用的时候，如果类没进行初始化，需要先调用其初始化方法进行初始化。</li>
+<li>当初始化一个类时，如果其父类还未进行初始化，会先触发其父类的初始化。</li>
+<li>当虚拟机启动时，用户需要指定一个要执行的主类（包含main()方法的类），虚拟机会先初始化这个类。</li>
+<li>当使用JDK 1.7等动态语言支持时，如果一个java.lang.invoke.MethodHandle实例最后的解析结果REF_getStatic, REF_pubStatic, REF_invokeStatic的方法句柄，并且这个方法柄所对应的类没有进行过初始化，则需要先触发其初始化。</li>
+</ol>
+<p>这5种情况被称为时类的主动引用，注意，这里《虚拟机规范》中使用的限定词是“有且仅有”,那么，除此之外的所有引用类都不会对类进行初始化，称为被动引用。静态内部类就属于被动引用的行列。</p>
+<p>我们再回头看一下个体Instance()方法，调用的是SingleTonHoler.INSTANCE,取的是SingleTonHolder里的INSTANCE对象，跟上面那个DCL方法不同的是，getInstance()方法并没有多次去new对象，故不管多少个线程去调用getInstance()方法，取的都是同一个INSTANCE对象，而不用去重新创建。当getInstance()方法被调用时，SingleTonHolder才在SingleTon的运行时常量池里，把符号引用替换为直接引用，这时静态对象INSTANCE也真正被重建，然后再被getInstance()方法返回出去，这点同饿汉模式。那么INSTANCE在创建过程中又是如何保证线程安全的呢？在《深入理解JAVA虚拟机》中，有这么一句话：</p>
+<blockquote>
+<p>虚拟机会保证一个类()方法在多线程环境中被正确的加锁，同步，如果多个线程同时去初始化一个类，那么只有一个线程去执行这个类的()方法，其他线程都需要阻塞等待，直到活动线程执行()方法完毕。如果在一个类的()方法中有耗时很长的操作，就可能造成多个线程阻塞(需要注意的是，其他线程虽然会被阻塞，但如果执行()方法后，其他线程唤醒之后不会再次进入()方法。同一个加载器下，一个类型只会初始化一次。)，在实际应用中，这种阻塞往往是很隐蔽的。</p>
+</blockquote>
+<p>故而，可以看出INSTANCE在创建过程中线程是安全的，所以说静态内部类形式的单例可保证线程安全，也能保证单例的唯一性，同时也延迟了单例的实例化。</p>
+<p>那么，是不是可以说静态内部类单例就是最完美的单例模式了呢？其实不然，静态内部类也有着一个致命的缺点，就是传参的问题，由于是静态内部类的形式去创建单例的，故外部无法传递参数进去，例如Context这种参数，所以，我们创建单例时，可以在静态内部类与DCL模式里自己斟酌。</p>
+<h4 id="四种线程安全的单例模式比较"><a href="#四种线程安全的单例模式比较" class="headerlink" title="四种线程安全的单例模式比较"></a>四种线程安全的单例模式比较</h4><ul>
+<li>饿汉模式：性能好，写法简单，CodeSheep比较推荐用这个</li>
+<li>加synchronized关键字：性能差，不过对懒汉式的盖章比较直接有效。</li>
+<li>volatile-双重验证加锁：性能好，对Java版本有要求，要求Java5以上版本</li>
+<li>静态内部类：性能好，无需加锁，有JVM类加载保证。</li>
+</ul>
+<p>参考CodeSheep公众号</p>
+
+        </div>
+    
+
+</div>
+            
+                
+<div class="post">
+
+    <div class="post-header index">
+        <h1 class="title">
             <a href="/2020/11/15/Java%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%92%8C%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E6%95%B4%E5%90%88/">
                 Untitled
             </a>
@@ -168,7 +256,7 @@
 
     
         <div class="content">
-            <h1 id="UJava应用程序和数据库的整合"><a href="#UJava应用程序和数据库的整合" class="headerlink" title="UJava应用程序和数据库的整合"></a>UJava应用程序和数据库的整合</h1><p>面向对象语言能够用丰富的方式对真实的世界进行建模。。关系数据库将数据持久化在表格中，而表格通常是一种更平坦的数据结构，对同样的表达能力具有局限性。</p>
+            <h1 id="Java应用程序和数据库的整合"><a href="#Java应用程序和数据库的整合" class="headerlink" title="Java应用程序和数据库的整合"></a>Java应用程序和数据库的整合</h1><p>面向对象语言能够用丰富的方式对真实的世界进行建模。。关系数据库将数据持久化在表格中，而表格通常是一种更平坦的数据结构，对同样的表达能力具有局限性。</p>
 <p>本章讨论如何连接和使用数据库，以及如何将Java数据类型持久化到数据库中。本章所有示例都使用MySQL数据库，包括通过MySQL控制台访问(用mysql&gt;提示符表示)，以及通过Java的数据库接口访问。</p>
 <h2 id="SQL简介"><a href="#SQL简介" class="headerlink" title="SQL简介"></a>SQL简介</h2><p>SQL是一种抽象的声明式语言，用于在关系数据库中执行查询和数据操作。SQL是一种标准，和具体的数据库实现无关。如今基本上所有正在使用的成熟的关系数据库产品都支持SQL。</p>
 <p><strong><u><em>如何通过SQL从关系数据库检索数据？</em></u></strong></p>
@@ -1412,6 +1500,10 @@
         <ul>
             
             <li>
+                <a class="footer-post" href="/2020/11/17/%E4%B8%80%E4%B8%AA%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E7%9A%84%E6%81%B6%E6%B1%89%E5%8D%95%E4%BE%8B/">Untitled</a>
+            </li>
+            
+            <li>
                 <a class="footer-post" href="/2020/11/15/Java%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%92%8C%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E6%95%B4%E5%90%88/">Untitled</a>
             </li>
             
@@ -1421,10 +1513,6 @@
             
             <li>
                 <a class="footer-post" href="/2020/11/06/%E9%9B%86%E5%90%88/">Untitled</a>
-            </li>
-            
-            <li>
-                <a class="footer-post" href="/2020/11/03/HashMap%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">Untitled</a>
             </li>
             
         </ul>
